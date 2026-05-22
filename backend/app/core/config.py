@@ -1,6 +1,6 @@
 from functools import lru_cache
-
 from pydantic import field_validator
+from pydantic import computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -27,6 +27,13 @@ class Settings(BaseSettings):
         if value.startswith("postgres://"):
             return value.replace("postgres://", "postgresql+asyncpg://", 1)
         return value
+
+    @computed_field
+    @property
+    def frontend_origins(self) -> list[str]:
+        origins = [origin.strip().rstrip("/") for origin in self.frontend_origin.split(",") if origin.strip()]
+        defaults = ["http://localhost:3000", "http://localhost:5173"]
+        return list(dict.fromkeys([*origins, *defaults]))
 
 
 @lru_cache
