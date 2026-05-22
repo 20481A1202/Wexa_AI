@@ -1,6 +1,6 @@
 # Atlas Analytics
 
-A production-style analytics SaaS MVP built for the Senior Full Stack Engineer assessment. It uses React.js on the frontend and FastAPI/Python on the backend, with PostgreSQL, Redis, and Celery for async processing.
+A production-style analytics SaaS MVP built for the Senior Full Stack Engineer assessment. It uses Next.js App Router with React/TypeScript on the frontend and FastAPI/Python on the backend, with PostgreSQL, Redis, and Celery for async processing.
 
 ## What is included
 
@@ -18,7 +18,7 @@ A production-style analytics SaaS MVP built for the Senior Full Stack Engineer a
 
 ## Tech stack
 
-- Frontend: React + Vite + TypeScript + Tailwind CSS + TanStack Query + Recharts.
+- Frontend: Next.js 14 App Router + React + TypeScript + Tailwind CSS + TanStack Query + Recharts.
 - Backend: FastAPI + SQLAlchemy async + Pydantic v2.
 - Infrastructure: PostgreSQL + Redis + Celery.
 
@@ -51,7 +51,7 @@ npm install
 npm run dev
 ```
 
-Frontend runs at `http://localhost:5173`.
+Frontend runs at `http://localhost:3000` unless another port is selected.
 
 ## Demo flow
 
@@ -110,7 +110,7 @@ Deployment templates are included:
 - `render.yaml` for Render backend + Postgres.
 - `frontend/vercel.json` for Vercel frontend deploy.
 
-Actual hosting requires connecting your Railway/Render/Vercel account and setting production env vars such as `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET_KEY`, `FRONTEND_ORIGIN`, `SENDGRID_API_KEY`, `SENDGRID_FROM_EMAIL`, and `VITE_API_URL`.
+Actual hosting requires connecting your Railway/Render/Vercel account and setting production env vars such as `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET_KEY`, `FRONTEND_ORIGIN`, `SENDGRID_API_KEY`, `SENDGRID_FROM_EMAIL`, and `NEXT_PUBLIC_API_URL`.
 
 ## Notifications
 
@@ -124,7 +124,7 @@ The notification stack is:
 
 The backend is organized as routers, services, schemas, models, and worker tasks. Tenant isolation is enforced by attaching every business record to an `organization_id` and filtering queries through the current membership or API key organization.
 
-The frontend is plain React.js with Vite rather than Next.js, matching the requested React implementation. If strict compliance with a Next.js-only assessment is required later, the page structure and API client can be migrated to Next.js App Router without changing the backend contract.
+The frontend is implemented with Next.js App Router while keeping the original React component structure. The backend contract is isolated in `frontend/src/api/client.ts`, so deployment URLs can be changed through `NEXT_PUBLIC_API_URL`.
 
 ## Tests
 

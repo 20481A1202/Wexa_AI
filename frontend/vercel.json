@@ -1,8 +1,7 @@
 {
   "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "framework": "vite",
+  "framework": "nextjs",
   "env": {
-    "VITE_API_URL": "https://your-backend-url.example.com"
+    "NEXT_PUBLIC_API_URL": "https://wexaai-production.up.railway.app"
   }
 }

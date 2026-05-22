@@ -1,13 +1,15 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { api, getToken, setToken } from "./api/client";
 import { AuthPanel } from "./components/AuthPanel";
 import { Layout, type View } from "./components/Layout";
-import { AlertsPage } from "./pages/AlertsPage";
-import { DashboardPage } from "./pages/DashboardPage";
-import { IngestionPage } from "./pages/IngestionPage";
-import { ReportsPage } from "./pages/ReportsPage";
-import { TeamPage } from "./pages/TeamPage";
+import { AlertsPage } from "./features/AlertsPage";
+import { DashboardPage } from "./features/DashboardPage";
+import { IngestionPage } from "./features/IngestionPage";
+import { ReportsPage } from "./features/ReportsPage";
+import { TeamPage } from "./features/TeamPage";
 import type { UserContext } from "./types/models";
 
 const queryClient = new QueryClient();
