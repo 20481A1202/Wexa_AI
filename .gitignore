@@ -1,0 +1,11 @@
+__pycache__/
+.pytest_cache/
+.venv/
+venv/
+node_modules/
+dist/
+.env
+*.db
+alert-test-result.png
+.DS_Store
+postgres-data/
