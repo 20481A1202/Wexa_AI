@@ -114,8 +114,9 @@ async def send_invite_email(
     frontend_url = settings.frontend_origins[0] if settings.frontend_origins else settings.frontend_origin
     invite_message = (
         f"You have been invited to join {organization_name} as {role.value}.\n\n"
-        f"Open {frontend_url} and sign in with this email address, then accept the invite using this token:\n\n"
-        f"{token}\n\n"
+        f"Open this link and sign in with this email address to accept the invite:\n\n"
+        f"{frontend_url}?invite_token={token}\n\n"
+        f"Backup token: {token}\n\n"
         "Keep this token private."
     )
     status = "delivered"

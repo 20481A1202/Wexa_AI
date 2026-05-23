@@ -134,7 +134,18 @@ export function DashboardPage() {
                   <p className="text-sm text-slate-500">{selected.description || "No description"}</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-sm text-slate-500">{selected.public_token ? `Public: ${selected.public_token}` : "Team only"}</span>
+                  {selected.public_token ? (
+                    <a
+                      className="break-all text-sm text-ocean"
+                      href={`/?dashboard=${selected.public_token}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Public link
+                    </a>
+                  ) : (
+                    <span className="text-sm text-slate-500">Team only</span>
+                  )}
                   <button className="focus-ring rounded border px-3 py-2 text-sm" onClick={() => setPresentation(!presentation)}>
                     {presentation ? "Exit full screen" : "Present"}
                   </button>

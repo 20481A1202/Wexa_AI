@@ -80,6 +80,9 @@ export const api = {
   invite(payload: { email: string; role: Role }) {
     return request<{ token: string }>("/organizations/invites", { method: "POST", body: JSON.stringify(payload) });
   },
+  acceptInvite(token: string) {
+    return request<void>("/organizations/invites/accept", { method: "POST", body: JSON.stringify({ token }) });
+  },
   updateMember(memberId: string, role: Role) {
     return request(`/organizations/members/${memberId}`, { method: "PATCH", body: JSON.stringify({ role }) });
   },
@@ -109,6 +112,12 @@ export const api = {
   },
   widgetData(dashboardId: string, widgetId: string) {
     return request<{ widget_id: string; points: ChartPoint[] }>(`/dashboards/${dashboardId}/widgets/${widgetId}/data`);
+  },
+  publicDashboard(token: string) {
+    return request<Dashboard>(`/dashboards/public/${token}`);
+  },
+  publicWidgetData(token: string, widgetId: string) {
+    return request<{ widget_id: string; points: ChartPoint[] }>(`/dashboards/public/${token}/widgets/${widgetId}/data`);
   },
   ingestEvent(apiKey: string, payload: { name: string; source: string; properties: Record<string, unknown> }) {
     return request<{ accepted: number }>("/ingest/events", {

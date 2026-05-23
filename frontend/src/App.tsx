@@ -8,6 +8,7 @@ import { Layout, type View } from "./components/Layout";
 import { AlertsPage } from "./features/AlertsPage";
 import { DashboardPage } from "./features/DashboardPage";
 import { IngestionPage } from "./features/IngestionPage";
+import { PublicDashboardPage } from "./features/PublicDashboardPage";
 import { ReportsPage } from "./features/ReportsPage";
 import { TeamPage } from "./features/TeamPage";
 import type { UserContext } from "./types/models";
@@ -18,8 +19,14 @@ export function App() {
   const [user, setUser] = useState<UserContext | null>(null);
   const [view, setView] = useState<View>("dashboards");
   const [booting, setBooting] = useState(true);
+  const [publicDashboardToken, setPublicDashboardToken] = useState<string | null>(null);
+  const [inviteToken, setInviteToken] = useState<string | null>(null);
+  const [inviteStatus, setInviteStatus] = useState<string | null>(null);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setPublicDashboardToken(params.get("dashboard"));
+    setInviteToken(params.get("invite_token"));
     if (!getToken()) {
       setBooting(false);
       return;
@@ -35,7 +42,9 @@ export function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {!user ? (
+      {publicDashboardToken ? (
+        <PublicDashboardPage token={publicDashboardToken} />
+      ) : !user ? (
         <AuthPanel onAuthenticated={setUser} />
       ) : (
         <Layout
@@ -51,6 +60,27 @@ export function App() {
           {view === "team" && <TeamPage />}
           {view === "alerts" && <AlertsPage />}
           {view === "reports" && <ReportsPage />}
+          {inviteToken && (
+            <div className="fixed bottom-4 right-4 max-w-md rounded border border-slate-200 bg-white p-4 text-sm shadow">
+              <p className="font-semibold text-ink">Pending invite</p>
+              <p className="mt-1 text-slate-600">Accept this invite for {user.email}.</p>
+              {inviteStatus && <p className="mt-2 text-mint">{inviteStatus}</p>}
+              <button
+                className="focus-ring mt-3 rounded bg-mint px-3 py-2 text-white"
+                onClick={() =>
+                  api
+                    .acceptInvite(inviteToken)
+                    .then(() => {
+                      setInviteStatus("Invite accepted. Refreshing workspace.");
+                      setTimeout(() => window.location.assign(window.location.pathname), 900);
+                    })
+                    .catch((error) => setInviteStatus(error instanceof Error ? error.message : "Invite could not be accepted"))
+                }
+              >
+                Accept invite
+              </button>
+            </div>
+          )}
         </Layout>
       )}
     </QueryClientProvider>

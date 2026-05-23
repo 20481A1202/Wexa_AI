@@ -16,10 +16,10 @@ import {
 import { api } from "../api/client";
 import type { Widget } from "../types/models";
 
-export function WidgetChart({ dashboardId, widget }: { dashboardId: string; widget: Widget }) {
+export function WidgetChart({ dashboardId, widget, publicToken }: { dashboardId: string; widget: Widget; publicToken?: string }) {
   const { data, isLoading } = useQuery({
-    queryKey: ["widget-data", dashboardId, widget.id],
-    queryFn: () => api.widgetData(dashboardId, widget.id),
+    queryKey: ["widget-data", dashboardId, widget.id, publicToken],
+    queryFn: () => (publicToken ? api.publicWidgetData(publicToken, widget.id) : api.widgetData(dashboardId, widget.id)),
     refetchInterval: 30000
   });
   const points = data?.points ?? [];

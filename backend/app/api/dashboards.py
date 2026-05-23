@@ -90,6 +90,39 @@ async def create_dashboard(
     return serialize_dashboard(result.scalar_one())
 
 
+@router.get("/public/{public_token}", response_model=DashboardResponse)
+async def get_public_dashboard(public_token: str, session: Annotated[AsyncSession, Depends(get_session)]):
+    result = await session.execute(
+        select(Dashboard)
+        .where(Dashboard.public_token == public_token, Dashboard.is_public.is_(True))
+        .options(selectinload(Dashboard.widgets))
+    )
+    dashboard = result.scalar_one_or_none()
+    if not dashboard:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dashboard not found")
+    return serialize_dashboard(dashboard)
+
+
+@router.get("/public/{public_token}/widgets/{widget_id}/data", response_model=WidgetDataResponse)
+async def public_widget_data(
+    public_token: str,
+    widget_id: str,
+    session: Annotated[AsyncSession, Depends(get_session)],
+):
+    result = await session.execute(
+        select(Dashboard)
+        .where(Dashboard.public_token == public_token, Dashboard.is_public.is_(True))
+        .options(selectinload(Dashboard.widgets))
+    )
+    dashboard = result.scalar_one_or_none()
+    if not dashboard:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dashboard not found")
+    widget = next((item for item in dashboard.widgets if item.id == widget_id), None)
+    if not widget:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Widget not found")
+    return await build_widget_data(session, dashboard.organization_id, widget)
+
+
 @router.get("/{dashboard_id}", response_model=DashboardResponse)
 async def get_dashboard(
     dashboard_id: str,
@@ -157,10 +190,14 @@ async def widget_data(
     widget = await session.get(Widget, widget_id)
     if not widget or widget.dashboard_id != dashboard_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Widget not found")
+    return await build_widget_data(session, current.organization_id, widget)
+
+
+async def build_widget_data(session: AsyncSession, organization_id: str, widget: Widget) -> WidgetDataResponse:
     result = await session.execute(
         select(Event.occurred_at)
         .where(
-            Event.organization_id == current.organization_id,
+            Event.organization_id == organization_id,
             Event.name == widget.metric_name,
             Event.occurred_at >= range_start(widget.time_range),
         )
@@ -171,7 +208,7 @@ async def widget_data(
         label = occurred_at.replace(minute=0, second=0, microsecond=0).isoformat()
         buckets[label] = buckets.get(label, 0) + 1
     points = [ChartPoint(label=label, value=value) for label, value in buckets.items()]
-    return WidgetDataResponse(widget_id=widget_id, points=points)
+    return WidgetDataResponse(widget_id=widget.id, points=points)
 
 
 @widgets_router.patch("/{widget_id}", response_model=WidgetResponse)

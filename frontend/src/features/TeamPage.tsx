@@ -72,6 +72,9 @@ export function TeamPage() {
         {invite.isSuccess && (
           <div className="mt-4 space-y-2 rounded bg-slate-100 p-3 text-sm">
             <p className="font-medium text-mint">Invite email sent.</p>
+            <a className="block break-all text-ocean" href={`/?invite_token=${invite.data.token}`}>
+              Open invite link
+            </a>
             <p className="break-all text-slate-600">Backup token: {invite.data.token}</p>
           </div>
         )}
