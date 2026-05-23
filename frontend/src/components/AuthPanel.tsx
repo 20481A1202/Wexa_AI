@@ -17,18 +17,20 @@ export function AuthPanel({ onAuthenticated }: Props) {
     setLoading(true);
     setError(null);
     const data = new FormData(event.currentTarget);
+    const email = String(data.get("email")).trim().toLowerCase();
+    const password = String(data.get("password"));
     try {
       const response =
         mode === "signup"
           ? await api.signup({
-              email: String(data.get("email")),
+              email,
               full_name: String(data.get("full_name")),
-              password: String(data.get("password")),
+              password,
               organization_name: String(data.get("organization_name"))
             })
           : await api.login({
-              email: String(data.get("email")),
-              password: String(data.get("password"))
+              email,
+              password
             });
       setToken(response.access_token);
       onAuthenticated(response.user);
@@ -74,7 +76,12 @@ export function AuthPanel({ onAuthenticated }: Props) {
               </>
             )}
             <Field name="email" label="Email" type="email" autoComplete="email" />
-            <Field name="password" label="Password" type="password" autoComplete="current-password" />
+            <Field
+              name="password"
+              label="Password"
+              type="password"
+              autoComplete={mode === "signup" ? "new-password" : "current-password"}
+            />
             {error && <p className="rounded border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose">{error}</p>}
             <button className="focus-ring w-full rounded bg-ink px-4 py-3 font-medium text-white" disabled={loading}>
               {loading ? "Working..." : mode === "signup" ? "Create account" : "Sign in"}
