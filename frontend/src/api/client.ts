@@ -58,6 +58,12 @@ export const api = {
   login(payload: { email: string; password: string }) {
     return request<AuthResponse>("/auth/login", { method: "POST", body: JSON.stringify(payload) });
   },
+  requestPasswordReset(email: string) {
+    return request<void>("/auth/password-reset/request", { method: "POST", body: JSON.stringify({ email }) });
+  },
+  confirmPasswordReset(payload: { token: string; password: string }) {
+    return request<void>("/auth/password-reset/confirm", { method: "POST", body: JSON.stringify(payload) });
+  },
   me() {
     return request<AuthResponse["user"]>("/auth/me");
   },

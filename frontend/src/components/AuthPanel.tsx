@@ -1,4 +1,4 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { Activity } from "lucide-react";
 import { api, setToken } from "../api/client";
 import type { UserContext } from "../types/models";
@@ -8,18 +8,41 @@ interface Props {
 }
 
 export function AuthPanel({ onAuthenticated }: Props) {
-  const [mode, setMode] = useState<"login" | "signup">("signup");
+  const [mode, setMode] = useState<"login" | "signup" | "reset-request" | "reset-confirm">("signup");
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [resetToken, setResetToken] = useState("");
+
+  useEffect(() => {
+    const token = new URLSearchParams(window.location.search).get("reset_token");
+    if (token) {
+      setResetToken(token);
+      setMode("reset-confirm");
+    }
+  }, []);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoading(true);
     setError(null);
+    setNotice(null);
     const data = new FormData(event.currentTarget);
     const email = String(data.get("email")).trim().toLowerCase();
     const password = String(data.get("password"));
     try {
+      if (mode === "reset-request") {
+        await api.requestPasswordReset(email);
+        setNotice("Password reset email sent. Check your inbox or spam folder.");
+        return;
+      }
+      if (mode === "reset-confirm") {
+        await api.confirmPasswordReset({ token: resetToken || String(data.get("token")), password });
+        setNotice("Password updated. Sign in with your new password.");
+        setMode("login");
+        window.history.replaceState({}, "", window.location.pathname);
+        return;
+      }
       const response =
         mode === "signup"
           ? await api.signup({
@@ -66,8 +89,18 @@ export function AuthPanel({ onAuthenticated }: Props) {
         <section className="flex items-center bg-white px-6 py-10 text-ink sm:px-10">
           <form onSubmit={submit} className="w-full space-y-5">
             <div>
-              <p className="text-sm font-medium text-mint">{mode === "signup" ? "Create workspace" : "Welcome back"}</p>
-              <h2 className="mt-2 text-2xl font-semibold">{mode === "signup" ? "Start your analytics org" : "Sign in"}</h2>
+              <p className="text-sm font-medium text-mint">
+                {mode === "signup" ? "Create workspace" : mode === "login" ? "Welcome back" : "Account recovery"}
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold">
+                {mode === "signup"
+                  ? "Start your analytics org"
+                  : mode === "login"
+                    ? "Sign in"
+                    : mode === "reset-request"
+                      ? "Reset password"
+                      : "Set new password"}
+              </h2>
             </div>
             {mode === "signup" && (
               <>
@@ -75,24 +108,56 @@ export function AuthPanel({ onAuthenticated }: Props) {
                 <Field name="organization_name" label="Organization" />
               </>
             )}
-            <Field name="email" label="Email" type="email" autoComplete="email" />
-            <Field
-              name="password"
-              label="Password"
-              type="password"
-              autoComplete={mode === "signup" ? "new-password" : "current-password"}
-            />
+            {mode !== "reset-confirm" && <Field name="email" label="Email" type="email" autoComplete="email" />}
+            {mode === "reset-confirm" && !resetToken && <Field name="token" label="Reset token" />}
+            {mode !== "reset-request" && (
+              <Field
+                name="password"
+                label={mode === "reset-confirm" ? "New password" : "Password"}
+                type="password"
+                autoComplete={mode === "signup" || mode === "reset-confirm" ? "new-password" : "current-password"}
+              />
+            )}
             {error && <p className="rounded border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose">{error}</p>}
+            {notice && <p className="rounded border border-teal-200 bg-teal-50 px-3 py-2 text-sm text-mint">{notice}</p>}
             <button className="focus-ring w-full rounded bg-ink px-4 py-3 font-medium text-white" disabled={loading}>
-              {loading ? "Working..." : mode === "signup" ? "Create account" : "Sign in"}
+              {loading
+                ? "Working..."
+                : mode === "signup"
+                  ? "Create account"
+                  : mode === "login"
+                    ? "Sign in"
+                    : mode === "reset-request"
+                      ? "Send reset email"
+                      : "Update password"}
             </button>
-            <button
-              type="button"
-              className="focus-ring w-full rounded border border-slate-300 px-4 py-3 text-sm font-medium"
-              onClick={() => setMode(mode === "signup" ? "login" : "signup")}
-            >
-              {mode === "signup" ? "Use existing account" : "Create new account"}
-            </button>
+            <div className="grid gap-2">
+              <button
+                type="button"
+                className="focus-ring w-full rounded border border-slate-300 px-4 py-3 text-sm font-medium"
+                onClick={() => setMode(mode === "signup" ? "login" : "signup")}
+              >
+                {mode === "signup" ? "Use existing account" : "Create new account"}
+              </button>
+              {mode === "login" && (
+                <button
+                  type="button"
+                  className="focus-ring w-full rounded border border-slate-300 px-4 py-3 text-sm font-medium"
+                  onClick={() => setMode("reset-request")}
+                >
+                  Forgot password
+                </button>
+              )}
+              {mode !== "login" && mode !== "signup" && (
+                <button
+                  type="button"
+                  className="focus-ring w-full rounded border border-slate-300 px-4 py-3 text-sm font-medium"
+                  onClick={() => setMode("login")}
+                >
+                  Back to sign in
+                </button>
+              )}
+            </div>
           </form>
         </section>
       </div>
