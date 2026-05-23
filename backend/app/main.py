@@ -40,6 +40,16 @@ async def health():
     return {"status": "ok"}
 
 
+@app.get("/health/config")
+async def health_config():
+    return {
+        "status": "ok",
+        "sendgrid_configured": bool(settings.sendgrid_api_key),
+        "sendgrid_from_email": settings.sendgrid_from_email,
+        "frontend_origins": settings.frontend_origins,
+    }
+
+
 app.include_router(api_router)
 
 
