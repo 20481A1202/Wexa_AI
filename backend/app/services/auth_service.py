@@ -1,5 +1,5 @@
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -21,12 +21,13 @@ def build_user_context(user: User, membership: Membership) -> UserContext:
 
 
 async def signup(session: AsyncSession, payload: SignupRequest) -> tuple[AuthResponse, str]:
-    existing = await session.scalar(select(User).where(User.email == payload.email))
+    email = payload.email.lower()
+    existing = await session.scalar(select(User).where(func.lower(User.email) == email))
     if existing:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered")
 
     org = Organization(name=payload.organization_name)
-    user = User(email=payload.email, full_name=payload.full_name, hashed_password=hash_password(payload.password))
+    user = User(email=email, full_name=payload.full_name, hashed_password=hash_password(payload.password))
     membership = Membership(user=user, organization=org, role=Role.owner)
     session.add_all([org, user, membership])
     await session.flush()
@@ -48,9 +49,10 @@ async def signup(session: AsyncSession, payload: SignupRequest) -> tuple[AuthRes
 
 
 async def login(session: AsyncSession, payload: LoginRequest) -> tuple[AuthResponse, str]:
+    email = payload.email.lower()
     result = await session.execute(
         select(User)
-        .where(User.email == payload.email, User.is_active.is_(True))
+        .where(func.lower(User.email) == email, User.is_active.is_(True))
         .options(selectinload(User.memberships).selectinload(Membership.organization))
     )
     user = result.scalar_one_or_none()
