@@ -39,6 +39,11 @@ class PasswordResetConfirm(BaseModel):
     password: str = Field(min_length=8)
 
 
+class PasswordResetRequestResponse(BaseModel):
+    sent: bool = True
+    reset_link: str | None = None
+
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"

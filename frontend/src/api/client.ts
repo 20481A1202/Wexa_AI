@@ -59,7 +59,10 @@ export const api = {
     return request<AuthResponse>("/auth/login", { method: "POST", body: JSON.stringify(payload) });
   },
   requestPasswordReset(email: string) {
-    return request<void>("/auth/password-reset/request", { method: "POST", body: JSON.stringify({ email }) });
+    return request<{ sent: boolean; reset_link?: string | null }>("/auth/password-reset/request", {
+      method: "POST",
+      body: JSON.stringify({ email })
+    });
   },
   confirmPasswordReset(payload: { token: string; password: string }) {
     return request<void>("/auth/password-reset/confirm", { method: "POST", body: JSON.stringify(payload) });

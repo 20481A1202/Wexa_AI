@@ -15,6 +15,7 @@ from app.schemas.auth import (
     LoginRequest,
     PasswordResetConfirm,
     PasswordResetRequest,
+    PasswordResetRequestResponse,
     SignupRequest,
     TokenResponse,
     UserContext,
@@ -51,7 +52,7 @@ async def login(payload: LoginRequest, response: Response, session: Annotated[As
     return auth_response
 
 
-@router.post("/password-reset/request", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/password-reset/request", response_model=PasswordResetRequestResponse)
 async def request_password_reset(
     payload: PasswordResetRequest,
     session: Annotated[AsyncSession, Depends(get_session)],
@@ -60,6 +61,7 @@ async def request_password_reset(
     user = await session.scalar(
         select(User).where(func.lower(User.email) == payload.email.lower(), User.is_active.is_(True))
     )
+    reset_link = None
     if user and settings.sendgrid_api_key:
         token = create_password_reset_token(user.id)
         frontend_url = settings.frontend_origins[0].rstrip("/")
@@ -76,6 +78,11 @@ async def request_password_reset(
             subject="Reset your Atlas Analytics password",
             message=message,
         )
+    elif user:
+        token = create_password_reset_token(user.id)
+        frontend_url = settings.frontend_origins[0].rstrip("/")
+        reset_link = f"{frontend_url}?reset_token={token}"
+    return PasswordResetRequestResponse(sent=True, reset_link=reset_link)
 
 
 @router.post("/password-reset/confirm", status_code=status.HTTP_204_NO_CONTENT)

@@ -11,6 +11,7 @@ export function AuthPanel({ onAuthenticated }: Props) {
   const [mode, setMode] = useState<"login" | "signup" | "reset-request" | "reset-confirm">("signup");
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [resetLink, setResetLink] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [resetToken, setResetToken] = useState("");
 
@@ -27,13 +28,15 @@ export function AuthPanel({ onAuthenticated }: Props) {
     setLoading(true);
     setError(null);
     setNotice(null);
+    setResetLink(null);
     const data = new FormData(event.currentTarget);
     const email = String(data.get("email")).trim().toLowerCase();
     const password = String(data.get("password"));
     try {
       if (mode === "reset-request") {
-        await api.requestPasswordReset(email);
+        const response = await api.requestPasswordReset(email);
         setNotice("Password reset email sent. Check your inbox or spam folder.");
+        if (response.reset_link) setResetLink(response.reset_link);
         return;
       }
       if (mode === "reset-confirm") {
@@ -120,6 +123,14 @@ export function AuthPanel({ onAuthenticated }: Props) {
             )}
             {error && <p className="rounded border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose">{error}</p>}
             {notice && <p className="rounded border border-teal-200 bg-teal-50 px-3 py-2 text-sm text-mint">{notice}</p>}
+            {resetLink && (
+              <a
+                className="block break-all rounded border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-ocean"
+                href={resetLink}
+              >
+                Open reset link
+              </a>
+            )}
             <button className="focus-ring w-full rounded bg-ink px-4 py-3 font-medium text-white" disabled={loading}>
               {loading
                 ? "Working..."
