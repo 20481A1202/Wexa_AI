@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from app.api import api_router
 from app.core.config import get_settings
 from app.core.security import decode_token
-from app.db.session import init_db
+from app.db.session import engine, init_db
 from app.services.realtime import realtime_manager
 
 settings = get_settings()
@@ -47,6 +47,7 @@ async def health_config():
         "sendgrid_configured": bool(settings.sendgrid_api_key),
         "sendgrid_from_email": settings.sendgrid_from_email,
         "frontend_origins": settings.frontend_origins,
+        "database_backend": engine.url.get_backend_name(),
     }
 
 
