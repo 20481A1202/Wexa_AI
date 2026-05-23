@@ -69,7 +69,13 @@ export function TeamPage() {
           <MailPlus size={16} />
           Send invite
         </button>
-        {invite.data?.token && <p className="mt-4 break-all rounded bg-slate-100 p-3 text-sm">{invite.data.token}</p>}
+        {invite.isSuccess && (
+          <div className="mt-4 space-y-2 rounded bg-slate-100 p-3 text-sm">
+            <p className="font-medium text-mint">Invite email sent.</p>
+            <p className="break-all text-slate-600">Backup token: {invite.data.token}</p>
+          </div>
+        )}
+        {invite.isError && <p className="mt-4 rounded bg-rose/10 p-3 text-sm text-rose">{(invite.error as Error).message}</p>}
       </form>
     </div>
   );

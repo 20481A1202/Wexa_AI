@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.models.entities import AlertRule, Notification
+from app.models.enums import Role
 
 
 async def create_notification(
@@ -99,6 +100,52 @@ async def notify_alert_triggered(session: AsyncSession, alert: AlertRule, value:
             status=status,
             error=error,
         )
+
+
+async def send_invite_email(
+    session: AsyncSession,
+    organization_id: str,
+    organization_name: str,
+    recipient: str,
+    role: Role,
+    token: str,
+) -> None:
+    settings = get_settings()
+    frontend_url = settings.frontend_origins[0] if settings.frontend_origins else settings.frontend_origin
+    invite_message = (
+        f"You have been invited to join {organization_name} as {role.value}.\n\n"
+        f"Open {frontend_url} and sign in with this email address, then accept the invite using this token:\n\n"
+        f"{token}\n\n"
+        "Keep this token private."
+    )
+    status = "delivered"
+    error = None
+    if settings.sendgrid_api_key:
+        try:
+            await send_sendgrid_email(
+                api_key=settings.sendgrid_api_key,
+                from_email=settings.sendgrid_from_email,
+                to_email=recipient,
+                subject=f"Invitation to join {organization_name}",
+                message=invite_message,
+            )
+        except Exception as exc:
+            status = "failed"
+            error = str(exc)
+    else:
+        status = "configured"
+        error = "SENDGRID_API_KEY not configured; invite email recorded for delivery"
+    await create_notification(
+        session=session,
+        organization_id=organization_id,
+        alert_rule_id=None,
+        channel="invite_email",
+        recipient=recipient,
+        title=f"Invite sent to {recipient}",
+        message=invite_message,
+        status=status,
+        error=error,
+    )
 
 
 async def send_sendgrid_email(api_key: str, from_email: str, to_email: str, subject: str, message: str) -> None:

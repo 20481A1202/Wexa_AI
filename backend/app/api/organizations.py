@@ -20,6 +20,7 @@ from app.schemas.organization import (
     OrganizationCurrentResponse,
     OrganizationResponse,
 )
+from app.services.notification_service import send_invite_email
 
 router = APIRouter(prefix="/organizations", tags=["organizations"])
 
@@ -57,6 +58,16 @@ async def create_invite(
     session.add(invite)
     await session.commit()
     await session.refresh(invite)
+    org = await session.get(Organization, current.organization_id)
+    await send_invite_email(
+        session=session,
+        organization_id=current.organization_id,
+        organization_name=org.name if org else "your organization",
+        recipient=payload.email,
+        role=payload.role,
+        token=invite.token,
+    )
+    await session.commit()
     return invite
 
 
